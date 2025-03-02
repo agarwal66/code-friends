@@ -1,11 +1,11 @@
  var unirest = require("unirest");
 
 function callit(){
-    var reqq = unirest("POST", "https://judge0.p.rapidapi.com/submissions");
+    var reqq = unirest("POST", "https://judge029.p.rapidapi.com/submissions");
 
     reqq.headers({
-        "x-rapidapi-host": "judge0.p.rapidapi.com",
-        "x-rapidapi-key": "18c523759dmsh7666d68c362130cp1166e8jsnb39d42270efb",
+        "x-rapidapi-host": "judge029.p.rapidapi.com",
+        "x-rapidapi-key": "11f65ff877msh1db5c2db38010f1p1a2538jsn5dc333e8e899",
         "content-type": "application/json",
         "accept": "application/json",
         "useQueryString": true

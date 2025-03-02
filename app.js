@@ -6,7 +6,6 @@ var logger = require("morgan");
 var hbs = require("hbs"); // Use `hbs` instead of `express-hbs`
 var bodyParser = require("body-parser");
 const dotenv = require("dotenv");
-
 var mongoose = require("mongoose");
 var passport = require("passport");
 var session = require("express-session");
