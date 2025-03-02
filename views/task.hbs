@@ -118,29 +118,33 @@
 
 </div>
 
+<div class="panel panel-primary mt-3">
+    <div class="panel-heading">Voice Chat</div>
+    <div class="panel-body">
+        <button id="startCall" class="btn btn-primary">Start Voice Chat</button>
+        <button id="endCall" class="btn btn-danger" style="display: none;">End Call</button>
+        <audio id="remoteAudio" autoplay></audio>
+    </div>
+</div>
+
 <input type="hidden" value="{{roomID}}" id="roomID">
-<input type="hidden" value="{{user.name}}" id="user" >
+<input type="hidden" value="{{user.name}}" id="user">
 
 <script>
     var EditorClient = ot.EditorClient;
     var SocketIOAdapter = ot.SocketIOAdapter;
     var CodeMirrorAdapter = ot.CodeMirrorAdapter;
 
-
     var socket = io.connect('https://code-friends.onrender.com/');
-    {{!-- var socket = io.connect('http://localhost:3000/'); --}}
-
+    
     var editor = CodeMirror.fromTextArea(document.getElementById("code-screen"), {
         lineNumbers: true,
         mode: "text/x-c++src",
         theme: "material-palenight",
         readOnly: false
-        
     });
 
     var code = $('#code-screen').val();
-//    console.log(code);
-
 
     var cmClient;
     function init(str, revision, clients, serverAdapter) {
@@ -157,7 +161,6 @@
 
     var username = $("#user").val().toString();
     
-    console.log(username);
     if (username === '') {
         var userId = Math.floor(Math.random() * 9999).toString();
         username = "User" + userId;
@@ -172,72 +175,55 @@
             + '<div class="media-body">' + '<b>' + name + '</b> : ' + text + '<hr/> </div></div></div> </li>'
         );
     };
-    function encode(str) {
-            return btoa(unescape(encodeURIComponent(str || "")));
-        }
 
-        function decode(bytes) {
-            var escaped = escape(atob(bytes || ""));
-            try {
-                return decodeURIComponent(escaped);
-            } catch {
-                return unescape(escaped);
-            }
+    function encode(str) {
+        return btoa(unescape(encodeURIComponent(str || "")));
+    }
+
+    function decode(bytes) {
+        var escaped = escape(atob(bytes || ""));
+        try {
+            return decodeURIComponent(escaped);
+        } catch {
+            return unescape(escaped);
         }
+    }
 
     var compileandrun = function(){
-
         var code = editor.getValue();
         var input = $('#code-input').val();
-        {{!-- console.log(code); --}}
-        {{!-- console.log($("#compile-btn").html()); --}}
         $("#compile-btn").html("Processing......")
         $("#compile-btn").removeClass("btn-success");
         $("#compile-btn").addClass("btn-dark");
 
-        var pathname = window.location.pathname; // Returns path only (/path/example.html
+        var pathname = window.location.pathname;
          $.ajax({
-                    url: pathname,
-                    type: 'POST',
-                    cache: false,
-                    data: { code : code, input: input },
-                    success: function (data) 
-                    {
-                        if(data.error)
-                        {
-                            console.log("printing error");
-                            $('#error').html(data.error);
-                        }
-                        else
-                        {
-                            console.log("reponse aaya bhai");
-                            
-                            $('#code-outpu').html(data.stdout);
-                            $("#compile-btn").html("Compile and Run")
-                            $("#compile-btn").removeClass("btn-dark");
-                            $("#compile-btn").removeClass("btn-danger");
-                            $("#compile-btn").addClass("btn-success");
-                            {{!-- $("#code-output").css({ "visiblity": "visible" }); --}}
-                            
-
-                        }
-
-                    },
-                    timeout : 12000,  //Req expire after 12 Seconds and Button Changes to retry.
-                    error: function(data){
-                        console.log(data);
-                        $("#compile-btn").removeClass("btn-dark");
-                        $("#compile-btn").addClass("btn-danger");
-                        $('#compile-btn').html("Retry");
-                    }
-                    {{!-- , error: function (jqXHR, textStatus, err) {
-                        alert('text status ' + textStatus + ', err ' + err)
-                    } --}}
-                });
-
-            code = "pssasa";
-                       
-
+            url: pathname,
+            type: 'POST',
+            cache: false,
+            data: { code : code, input: input },
+            success: function (data) 
+            {
+                if(data.error)
+                {
+                    $('#error').html(data.error);
+                }
+                else
+                {
+                    $('#code-output').html(data.stdout);
+                    $("#compile-btn").html("Compile and Run")
+                    $("#compile-btn").removeClass("btn-dark");
+                    $("#compile-btn").removeClass("btn-danger");
+                    $("#compile-btn").addClass("btn-success");
+                }
+            },
+            timeout : 12000,
+            error: function(data){
+                $("#compile-btn").removeClass("btn-dark");
+                $("#compile-btn").addClass("btn-danger");
+                $('#compile-btn').html("Retry");
+            }
+        });
     }
 
     var sendMessage = function () {
@@ -248,5 +234,89 @@
 
     socket.on('chatMessage', function (data) {
         $('#chatbox-listMessages').append(userMessage(data.username, data.message));
-    })
+    });
+
+    // Voice Chat Implementation
+    let localStream;
+    let peerConnection;
+    const config = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+
+    document.getElementById("startCall").addEventListener("click", async () => {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            document.getElementById("endCall").style.display = "inline";
+            document.getElementById("startCall").style.display = "none";
+
+            peerConnection = new RTCPeerConnection(config);
+            localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+            peerConnection.onicecandidate = event => {
+                if (event.candidate) {
+                    socket.emit("iceCandidate", { candidate: event.candidate, room: roomID });
+                }
+            };
+
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit("voiceOffer", { offer, room: roomID });
+        } catch (err) {
+            alert("Microphone access denied. Please allow access.");
+        }
+    });
+
+    socket.on("voiceOffer", async ({ offer }) => {
+        peerConnection = new RTCPeerConnection(config);
+        localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                socket.emit("iceCandidate", { candidate: event.candidate, room: roomID });
+            }
+        };
+peerConnection.ontrack = (event) => {
+        const remoteAudio = document.getElementById("remoteAudio");
+        if (event.streams && event.streams[0]) {
+            remoteAudio.srcObject = event.streams[0];
+
+            // Ensure playback starts
+            remoteAudio.play().catch(console.error);
+        }
+    };
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        socket.emit("voiceAnswer", { answer, room: roomID });
+    });
+
+    socket.on("voiceAnswer", async ({ answer }) => {
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on("iceCandidate", async ({ candidate }) => {
+        try {
+            await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+            console.error("Error adding ICE candidate:", err);
+        }
+    });
+
+    document.getElementById("endCall").addEventListener("click", () => {
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+        document.getElementById("startCall").style.display = "inline";
+        document.getElementById("endCall").style.display = "none";
+        socket.emit("endVoiceCall", { room: roomID });
+    });
+
+    socket.on("endVoiceCall", () => {
+        if (peerConnection) {
+            peerConnection.close();
+            peerConnection = null;
+        }
+        document.getElementById("startCall").style.display = "inline";
+        document.getElementById("endCall").style.display = "none";
+    });
 </script>

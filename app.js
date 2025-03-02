@@ -9,7 +9,8 @@ const dotenv = require("dotenv");
 var mongoose = require("mongoose");
 var passport = require("passport");
 var session = require("express-session");
-
+const logoutRoutes = require('./routes/logout');
+const MongoStore = require('connect-mongo');
 dotenv.config();
 require("./passport");
 
@@ -22,12 +23,13 @@ if (!process.env.MONGO_URI) {
 }
 
 // ✅ Connect to MongoDB only once
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-}).then(() => console.log('✅ MongoDB connected to Atlas'))
-.catch(err => console.error('❌ MongoDB connection error:', err));
-
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("✅ MongoDB connected to Atlas"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // ✅ Ensure SESSION_SECRET exists
 if (!sessionKey) {
@@ -41,14 +43,13 @@ var authRouter = require("./routes/login");
 var collabRouter = require("./routes/task");
 global.User = require("./models/user");
 global.Task = require("./models/task");
-
 var app = express();
 
 // ✅ Set up view engine
 app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "hbs");
 hbs.registerPartials(path.join(__dirname, "views/partials")); // ✅ Register partials
-
+app.use('/logout', logoutRoutes);
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -80,6 +81,21 @@ app.use("/", indexRouter);
 app.use("/", authRouter);
 app.use("/", collabRouter);
 app.use("/users", usersRouter);
+// const session = require('express-session');
+
+app.use(session({
+  secret: 'f5ce815eb1e1af331f853586be94194f3e8482be02696f419ef8f1034d5c14920483c47e0df78bb72454e424bcbe22807b1125f9a9b19b4b5342410657b4cf61', // Change this to a strong secret
+  resave: false, // ✅ Prevent unnecessary resaving
+  saveUninitialized: false, // ✅ Do not store empty sessions
+  store: MongoStore.create({
+      mongoUrl: 'mongodb://agarwalprateek666:qGOR1FPQHnwrFUD9@codingpltform-shard-00-00.llqnz.mongodb.net:27017,codingpltform-shard-00-01.llqnz.mongodb.net:27017,codingpltform-shard-00-02.llqnz.mongodb.net:27017/?authSource=admin&replicaSet=atlas-b9k7l7-shard-0&retryWrites=true&w=majority&ssl=true',
+      collectionName: 'sessions'
+  }),
+  cookie: {
+      maxAge: 1000 * 60 * 60, // 1 hour
+      httpOnly: true
+  }
+}));
 
 // ✅ 404 error handler
 app.use(function (req, res, next) {

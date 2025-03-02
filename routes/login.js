@@ -3,7 +3,6 @@ const { body, validationResult } = require('express-validator'); // ✅ Correct 
 const router = express.Router();
 const passport = require('passport');
 const User = require('../models/user'); // Ensure correct path
-
 // Login Page
 router.get('/login', (req, res) => {
     res.render('login', { title: 'Live Code Collab', layout: 'layout' });
@@ -63,11 +62,22 @@ router.post('/register', [
 });
 
 // Logout
-router.get('/logout', (req, res, next) => {
+// Logout (GET and POST)
+// Logout (GET request for direct link)
+router.post('/logout', (req, res, next) => {
     req.logout((err) => {
         if (err) return next(err);
-        res.redirect('/');
+        
+        req.session.destroy((err) => {
+            if (err) {
+                console.error("Session Destroy Error:", err);
+                return res.status(500).send("Logout Failed");
+            }
+            res.clearCookie('connect.sid'); // Clears session cookie
+            return res.redirect('/login');
+        });
     });
 });
+
 
 module.exports = router;
