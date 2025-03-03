@@ -189,42 +189,61 @@
         }
     }
 
-    var compileandrun = function(){
+  var compileandrun = function(){
+
         var code = editor.getValue();
         var input = $('#code-input').val();
+        {{!-- console.log(code); --}}
+        {{!-- console.log($("#compile-btn").html()); --}}
         $("#compile-btn").html("Processing......")
         $("#compile-btn").removeClass("btn-success");
         $("#compile-btn").addClass("btn-dark");
 
-        var pathname = window.location.pathname;
+        var pathname = window.location.pathname; // Returns path only (/path/example.html
          $.ajax({
-            url: pathname,
-            type: 'POST',
-            cache: false,
-            data: { code : code, input: input },
-            success: function (data) 
-            {
-                if(data.error)
-                {
-                    $('#error').html(data.error);
-                }
-                else
-                {
-                    $('#code-output').html(data.stdout);
-                    $("#compile-btn").html("Compile and Run")
-                    $("#compile-btn").removeClass("btn-dark");
-                    $("#compile-btn").removeClass("btn-danger");
-                    $("#compile-btn").addClass("btn-success");
-                }
-            },
-            timeout : 12000,
-            error: function(data){
-                $("#compile-btn").removeClass("btn-dark");
-                $("#compile-btn").addClass("btn-danger");
-                $('#compile-btn').html("Retry");
-            }
-        });
+                    url: pathname,
+                    type: 'POST',
+                    cache: false,
+                    data: { code : code, input: input },
+                    success: function (data) 
+                    {
+                        if(data.error)
+                        {
+                            console.log("printing error");
+                            $('#error').html(data.error);
+                        }
+                        else
+                        {
+                            console.log("reponse aaya bhai");
+                            
+                            $('#code-outpu').html(data.stdout);
+                            $("#compile-btn").html("Compile and Run")
+                            $("#compile-btn").removeClass("btn-dark");
+                            $("#compile-btn").removeClass("btn-danger");
+                            $("#compile-btn").addClass("btn-success");
+                            {{!-- $("#code-output").css({ "visiblity": "visible" }); --}}
+                            
+
+                        }
+
+                    },
+                    timeout : 12000,  //Req expire after 12 Seconds and Button Changes to retry.
+                    error: function(data){
+                        console.log(data);
+                        $("#compile-btn").removeClass("btn-dark");
+                        $("#compile-btn").addClass("btn-danger");
+                        $('#compile-btn').html("Retry");
+                    }
+                    {{!-- , error: function (jqXHR, textStatus, err) {
+                        alert('text status ' + textStatus + ', err ' + err)
+                    } --}}
+                });
+
+            code = "pssasa";
+                       
+
     }
+
 
     var sendMessage = function () {
         var userMessage = $('#userMessage').val();

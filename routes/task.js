@@ -30,8 +30,8 @@ router.post("/task/:id", async (req, res) => {
 
   var unreq = unirest("POST", "https://judge029.p.rapidapi.com/submissions");
   unreq.headers({
-    "x-rapidapi-host": "judge029.p.rapidapi.com",
-    "x-rapidapi-key": "11f65ff877msh1db5c2db38010f1p1a2538jsn5dc333e8e899", // Replace with your actual API Key
+    "x-rapidapi-host": process.env.RAPIDAPI_HOST,
+    "x-rapidapi-key":  process.env.RAPIDAPI_KEY, // Replace with your actual API Key
     "content-type": "application/json",
     accept: "application/json",
   });
@@ -58,8 +58,8 @@ router.post("/task/:id", async (req, res) => {
       );
 
       rereq.headers({
-        "x-rapidapi-host": "judge029.p.rapidapi.com",
-        "x-rapidapi-key": "11f65ff877msh1db5c2db38010f1p1a2538jsn5dc333e8e899", // Same API key as above
+        "x-rapidapi-host": process.env.RAPIDAPI_HOST,
+        "x-rapidapi-key":  process.env.RAPIDAPI_KEY, // Same API key as above
       });
 
       rereq.end((responses) => {
