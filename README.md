@@ -1,7 +1,5 @@
-# Live-Code-Collab
+#Code-With-Dude
 >RealTime Code collaboration platform 
-
-**Live Here :**  [https://livecodecollab.herokuapp.com/](https://livecodecollab.herokuapp.com/)
 
 Collab with your friends, colleagues and code together in realtime!. 
 
